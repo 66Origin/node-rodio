@@ -1,0 +1,14 @@
+{
+  "name": "node-rodio",
+  "version": "0.0.1",
+  "description": "Rodio (Rust audio playback library) bindings for Node.js with Neon",
+  "main": "lib/index.js",
+  "author": "Mathieu Amiot <amiot.mathieu@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "neon-cli": "^0.1.23"
+  },
+  "scripts": {
+    "install": "neon build"
+  }
+}

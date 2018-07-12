@@ -1,0 +1,20 @@
+[package]
+name = "node-rodio"
+version = "0.0.1"
+authors = ["Mathieu Amiot <amiot.mathieu@gmail.com>"]
+license = "MIT"
+build = "build.rs"
+
+[lib]
+name = "node_rodio"
+crate-type = ["dylib"]
+
+[build-dependencies]
+neon-build = "0.1.23"
+
+[dependencies]
+neon = "0.1.23"
+rodio = "0.8.0"
+serde_derive = "1.0.70"
+neon-serde = "0.0.3"
+serde = "1.0.70"
