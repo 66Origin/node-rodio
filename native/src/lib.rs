@@ -1,74 +1,93 @@
 #[macro_use]
 extern crate neon;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate neon_serde;
 extern crate rodio;
 
-#[allow(unused_imports)]
-use neon::js::{JsArray, JsBoolean, JsFunction, JsInteger, JsNull, JsNumber, JsObject, JsString,
-               JsUndefined, Object};
+use neon::js::class::{Class, JsClass};
+use neon::js::{JsFunction, JsNumber, JsUndefined, Object, Value};
 use neon::mem::Handle;
-use neon::vm::{Call, JsResult};
+use neon::vm::Lock;
 
-use std::fs::File;
-use std::io::BufReader;
-use std::thread;
+mod controller;
+mod funcs;
 
-#[derive(Serialize, Deserialize)]
-struct NodeRodio {
-    path: String,
+use self::controller::{NodeRodioCommand, NodeRodioController};
+
+#[derive(Debug, Clone)]
+pub struct NodeRodio {
+    controller: NodeRodioController,
 }
 
 impl NodeRodio {
-    pub fn new(path: String) -> Self {
-        NodeRodio { path }
-    }
-
-    pub fn play(&self) {
+    pub fn new() -> Self {
         let device = rodio::default_output_device().unwrap();
         let sink = rodio::Sink::new(&device);
-        let file = File::open(&self.path).unwrap();
-        sink.append(rodio::Decoder::new(BufReader::new(file)).unwrap());
-        thread::spawn(move || {
-            sink.sleep_until_end();
-        });
-        println!("success, should be playing now");
+        let controller = NodeRodioController::new(sink);
+
+        NodeRodio { controller }
     }
 }
 
-export! {
-    fn play(path: String) -> bool {
-        let nr = NodeRodio::new(path);
-        nr.play();
-        true
+declare_types! {
+    pub class JsRodio for NodeRodio {
+        init(_call) {
+            Ok(NodeRodio::new())
+        }
+
+        method play(call) {
+            call.arguments.this(call.scope).grab(|nrodio| {
+                nrodio.controller.send(NodeRodioCommand::Play);
+            });
+
+            Ok(JsUndefined::new().upcast())
+        }
+
+        method pause(call) {
+            call.arguments.this(call.scope).grab(|nrodio| {
+                nrodio.controller.send(NodeRodioCommand::Pause);
+            });
+
+            Ok(JsUndefined::new().upcast())
+        }
+
+        method stop(call) {
+            call.arguments.this(call.scope).grab(|nrodio| {
+                nrodio.controller.send(NodeRodioCommand::Stop);
+            });
+
+            Ok(JsUndefined::new().upcast())
+        }
+
+        method append(call) {
+            let scope = call.scope;
+            let path = call.arguments.require(scope, 0)?.to_string(scope)?.value();
+
+            call.arguments.this(scope).grab(|nrodio| {
+                nrodio.controller.send(NodeRodioCommand::Append(path));
+            });
+
+            Ok(JsUndefined::new().upcast())
+        }
+
+        method volume(call) {
+            let scope = call.scope;
+            let vol: f64 = call.arguments.require(scope, 0)?.check::<JsNumber>()?.value();
+
+            call.arguments.this(scope).grab(|nrodio| {
+                nrodio.controller.send(NodeRodioCommand::Volume(vol as f32));
+            });
+
+            Ok(JsUndefined::new().upcast())
+        }
     }
 }
-
-/*fn default_input_device(call: Call) -> JsResult<JsObject> {
-    let scope = call.scope;
-    let obj: Handle<JsObject> = JsObject::new(scope);
-    if let Some(device) = rodio::default_input_device() {
-        obj.set("name", JsString::new(scope, &device.name()).unwrap())?;
-    }
-    Ok(obj)
-}
-
-fn default_output_device(call: Call) -> JsResult<JsObject> {
-    let scope = call.scope;
-    let obj: Handle<JsObject> = JsObject::new(scope);
-    if let Some(device) = rodio::default_output_device() {
-        obj.set("name", JsString::new(scope, &device.name()).unwrap())?;
-    }
-    Ok(obj)
-}
-
-fn play_sound_with_default_output_device(call: Call) -> JsResult<
 
 register_module!(m, {
-    m.export("defaultInputDevice", default_input_device)?;
-    m.export("defaultOutputDevice", default_output_device)?;
+    let class: Handle<JsClass<JsRodio>> = JsRodio::class(m.scope)?;
+    let ctor: Handle<JsFunction<JsRodio>> = class.constructor(m.scope)?;
+    m.exports.set("Player", ctor)?;
+
+    m.export("defaultInputDevice", funcs::default_input_device)?;
+    m.export("defaultOutputDevice", funcs::default_output_device)?;
+
     Ok(())
-});*/
+});
