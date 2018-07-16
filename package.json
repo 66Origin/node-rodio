@@ -1,6 +1,6 @@
 {
   "name": "node-rodio",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Rodio (Rust audio playback library) bindings for Node.js with Neon",
   "main": "lib/index.js",
   "author": "Mathieu Amiot <amiot.mathieu@gmail.com>",
