@@ -2,17 +2,17 @@
 extern crate neon;
 extern crate rodio;
 
-use neon::js::class::{Class, JsClass};
-use neon::js::{JsFunction, JsNumber, JsUndefined, Object, Value};
-use neon::mem::Handle;
-use neon::vm::Lock;
+use neon::{
+    js::class::{Class, JsClass}, js::{JsFunction, JsNumber, JsUndefined, Object, Value},
+    mem::Handle, vm::Lock,
+};
 
 mod controller;
 mod funcs;
 
 use self::controller::{NodeRodioCommand, NodeRodioController};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct NodeRodio {
     controller: NodeRodioController,
 }
@@ -21,6 +21,7 @@ impl NodeRodio {
     pub fn new() -> Self {
         let device = rodio::default_output_device().unwrap();
         let sink = rodio::Sink::new(&device);
+        sink.pause();
         let controller = NodeRodioController::new(sink);
 
         NodeRodio { controller }
@@ -74,6 +75,16 @@ declare_types! {
 
             call.arguments.this(scope).grab(|nrodio| {
                 nrodio.controller.send(NodeRodioCommand::Volume(vol as f32));
+            });
+
+            Ok(JsUndefined::new().upcast())
+        }
+
+        method wait(call) {
+            let scope = call.scope;
+
+            call.arguments.this(scope).grab(|nrodio| {
+                nrodio.controller.wait();
             });
 
             Ok(JsUndefined::new().upcast())

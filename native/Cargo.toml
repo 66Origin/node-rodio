@@ -1,13 +1,9 @@
 [package]
+authors = ["Mathieu Amiot <amiot.mathieu@gmail.com>"]
+build = "build.rs"
+license = "MIT"
 name = "node-rodio"
 version = "0.0.1"
-authors = ["Mathieu Amiot <amiot.mathieu@gmail.com>"]
-license = "MIT"
-build = "build.rs"
-
-[lib]
-name = "node_rodio"
-crate-type = ["dylib"]
 
 [build-dependencies]
 neon-build = "0.1.23"
@@ -15,3 +11,7 @@ neon-build = "0.1.23"
 [dependencies]
 neon = "0.1.23"
 rodio = "0.8.0"
+
+[lib]
+crate-type = ["dylib"]
+name = "node_rodio"

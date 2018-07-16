@@ -17,6 +17,7 @@ player.volume(0.5); // Sets volume to 50%;
 player.pause(); // Pauses playback
 player.play(); // Resumes playback
 player.volume(1.0); // Sets the volume to 100%
+player.wait(); // blocks current thread until queue is finished
 
 player.stop(); // player is not usable at this point since we killed the process
 
