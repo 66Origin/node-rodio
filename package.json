@@ -1,5 +1,5 @@
 {
-  "name": "node-rodio",
+  "name": "@yellowinnovation/node-rodio",
   "version": "0.0.2",
   "description": "Rodio (Rust audio playback library) bindings for Node.js with Neon",
   "main": "lib/index.js",

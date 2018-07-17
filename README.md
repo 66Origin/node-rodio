@@ -4,7 +4,7 @@
 
 ## Installation
 
-`npm install node-rodio`
+`npm install @yellowinnovation/node-rodio`
 
 ## Usage
 
