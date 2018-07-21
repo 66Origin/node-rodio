@@ -11,6 +11,7 @@ neon-build = "0.1.23"
 [dependencies]
 neon = "0.1.23"
 rodio = "0.8.0"
+cpal = "0.8.2"
 
 [lib]
 crate-type = ["dylib"]

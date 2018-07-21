@@ -12,23 +12,51 @@
 
 const rodio = require('node-rodio');
 
-console.log(rodio.defaultInputDevice()); // { name: "Your default microphone" }
-console.log(rodio.defaultOutputDevice()); // { name: "Your default speakers/headphones" }
-const player = new rodio.Player(); // Initializes a new player
+try {
+    console.log(rodio.defaultInputDevice()); // { name: "Your default microphone" ... sample rate, format etc }
+    console.log(rodio.defaultOutputDevice()); // { name: "Your default speakers/headphones" ... sample rate, format etc }
+    console.log(rodio.devices()); // Lists all devices on the machine
+    console.log(rodio.inputDevices()); // Lists all input devices on the machine
+    console.log(rodio.outputDevices()); // Lists all output devices on the machine
 
-player.append("./samples/music.mp3"); // Loads a file in the queue
-player.append("./samples/beel.wav"); // Another one that will play after the music.mp3
-// If you'd like to get sounds in parallel, just create another player and make them .play(); at the same time!
-player.play() // Starts playback
-player.volume(0.5); // Sets volume to 50%;
-player.pause(); // Pauses playback
-player.play(); // Resumes playback
-player.volume(1.0); // Sets the volume to 100%
-player.wait(); // blocks current thread until queue is finished
+    const player = new rodio.Player(); // Initializes a new player
 
-player.stop(); // Stops playback completely and empties queue.
-// player is not usable at this point since we killed the background thread.
+    player.append("./samples/music.mp3"); // Loads a file in the queue
+    player.append("./samples/beep.wav"); // Another one that will play after the music.mp3
+    // If you'd like to get sounds in parallel, just create another player and make them .play(); at the same time!
+    player.play() // Starts playback
+    player.volume(0.5); // Sets volume to 50%;
+    player.pause(); // Pauses playback
+    player.play(); // Resumes playback
+    player.volume(1.0); // Sets the volume to 100%
+    player.wait(); // blocks current thread until queue is finished
+    player.stop(); // Stops playback completely and empties queue.
+    // player is not usable at this point since we killed the background thread.
+} catch (e) {
+    console.error(e); // all functions can throw in case there's a problem with system configuration or you did something wrong
+}
+```
 
+If you'd like, there's an other, a bit more raw, API available (useful if you'd like to integrate `Player` in your own API)
+
+```javascript
+try {
+    const player = new rodio.Player(); // Initializes a new player
+
+    player.send("append", "./samples/music.mp3"); // Loads a file in the queue
+    player.send("append", "./samples/beep.wav"); // Another one that will play after the music.mp3
+    // If you'd like to get sounds in parallel, just create another player and make them .send("play"); at the same time!
+    player.send("play") // Starts playback
+    player.send("volume", 0.5); // Sets volume to 50%;
+    player.send("pause"); // Pauses playback
+    player.send("play"); // Resumes playback
+    player.send("volume", 1.0); // Sets the volume to 100%
+    player.send("wait"); // blocks current thread until queue is finished
+    player.send("stop"); // Stops playback completely and empties queue.
+    // player is not usable at this point since we killed the background thread.
+} catch (e) {
+    console.error(e); // all functions can throw in case there's a problem with system configuration or you did something wrong
+}
 ```
 
 ## License

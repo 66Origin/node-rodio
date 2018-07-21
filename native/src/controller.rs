@@ -1,7 +1,7 @@
 use rodio;
 use std::fs::File;
 use std::io::BufReader;
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{channel, Receiver, RecvError, SendError, Sender};
 use std::thread;
 
 /// Commands that are being sent to the controller
@@ -71,11 +71,11 @@ impl NodeRodioController {
         NodeRodioController { tx, rx_out }
     }
 
-    pub fn send(&self, cmd: NodeRodioCommand) {
-        let _ = self.tx.send(cmd);
+    pub fn send(&self, cmd: NodeRodioCommand) -> Result<(), SendError<NodeRodioCommand>> {
+        self.tx.send(cmd)
     }
 
-    pub fn wait(&self) {
-        let _ = self.rx_out.recv();
+    pub fn wait(&self) -> Result<(), RecvError> {
+        self.rx_out.recv()
     }
 }
