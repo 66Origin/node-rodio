@@ -3,7 +3,7 @@ authors = ["Mathieu Amiot <amiot.mathieu@gmail.com>"]
 build = "build.rs"
 license = "Apache-2.0"
 name = "node-rodio"
-version = "0.0.4"
+version = "0.0.5"
 
 [build-dependencies]
 neon-build = "0.1.23"
