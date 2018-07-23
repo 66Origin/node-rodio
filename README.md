@@ -29,7 +29,9 @@ try {
     player.pause(); // Pauses playback
     player.play(); // Resumes playback
     player.volume(1.0); // Sets the volume to 100%
-    player.wait(); // blocks current thread until queue is finished
+    player.wait(() => { // Expects a callback that is executed when the queue is over
+        console.log('done!');
+    });
     player.stop(); // Stops playback completely and empties queue.
     // player is not usable at this point since we killed the background thread.
 } catch (e) {
@@ -37,7 +39,7 @@ try {
 }
 ```
 
-If you'd like, there's an other, a bit more raw, API available (useful if you'd like to integrate `Player` in your own API)
+If you'd like, there's an other, a bit more raw, API available (useful if you'd like to integrate `Player` in your own API) but the `wait` command is not supported to the inner workings
 
 ```javascript
 try {
@@ -51,7 +53,6 @@ try {
     player.send("pause"); // Pauses playback
     player.send("play"); // Resumes playback
     player.send("volume", 1.0); // Sets the volume to 100%
-    player.send("wait"); // blocks current thread until queue is finished
     player.send("stop"); // Stops playback completely and empties queue.
     // player is not usable at this point since we killed the background thread.
 } catch (e) {

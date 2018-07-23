@@ -29,6 +29,11 @@ version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "arcmutex"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "atty"
 version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -331,6 +336,7 @@ dependencies = [
 name = "node-rodio"
 version = "0.0.3"
 dependencies = [
+ "arcmutex 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cpal 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "neon 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "neon-build 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -599,6 +605,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum alsa-sys 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "b0edcbbf9ef68f15ae1b620f722180b82a98b6f0628d30baa6b8d2a5abc87d58"
 "checksum ansi_term 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ee49baf6cb617b853aa8d93bf420db2383fab46d314482ca2803b40d5fde979b"
 "checksum approx 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "08abcc3b4e9339e33a3d0a5ed15d84a687350c05689d825e0f6655eef9e76a94"
+"checksum arcmutex 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "6cc18212ef0b16ab29b58c733d86b37780cd86629e40ad11553d3b8492f63db2"
 "checksum atty 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)" = "2fc4a1aa4c24c0718a250f0681885c1af91419d242f29eb8f2ab28502d80dbd1"
 "checksum bindgen 0.32.3 (registry+https://github.com/rust-lang/crates.io-index)" = "8b242e11a8f446f5fc7b76b37e81d737cabca562a927bd33766dac55b5f1177f"
 "checksum bitflags 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)" = "d0c54bb8f454c567f21197eefcdbf5679d0bd99f2ddbe52e84c77061952e6789"
