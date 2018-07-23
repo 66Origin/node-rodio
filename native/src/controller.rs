@@ -46,12 +46,10 @@ impl NodeRodioController {
                 if let Ok(command) = rx.recv_timeout(timeout) {
                     match command {
                         NodeRodioCommand::Append(path) => {
-                            if let Ok(file) = File::open(&path) {
-                                if let Ok(decoder) = rodio::Decoder::new(BufReader::new(file)) {
-                                    sink.append(decoder);
-                                    added_once = true;
-                                }
-                            }
+                            let file = File::open(&path).unwrap();
+                            let decoder = rodio::Decoder::new(BufReader::new(file)).unwrap();
+                            sink.append(decoder);
+                            added_once = true;
                         }
                         NodeRodioCommand::Play => {
                             sink.play();

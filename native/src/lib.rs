@@ -29,8 +29,8 @@ impl NodeRodio {
     pub fn new() -> Option<Self> {
         let device = rodio::default_output_device()?;
         let sink = rodio::Sink::new(&device);
-        sink.pause();
         let controller = NodeRodioController::new(sink);
+        let _ = controller.send(NodeRodioCommand::Pause);
 
         Some(NodeRodio {
             controller: arcmutex(controller),
@@ -48,13 +48,22 @@ impl Task for WaitTask {
     type JsEvent = JsUndefined;
 
     fn perform(&self) -> Result<Self::Output, Self::Error> {
-        match self.controller.lock() {
-            Ok(controller) => match controller.wait() {
-                Ok(_) => Ok(()),
-                Err(e) => Err(format!("{}", e)),
+        match self.controller.try_lock() {
+            Ok(controller) => match controller.send(NodeRodioCommand::Play) {
+                Ok(_) => {}
+                Err(e) => return Err(format!("{}", e)),
             },
-            Err(e) => Err(format!("{}", e)),
+            Err(e) => return Err(format!("{}", e)),
         }
+
+        if let Ok(controller) = self.controller.lock() {
+            match controller.wait() {
+                Ok(_) => {}
+                Err(e) => return Err(format!("{}", e)),
+            }
+        }
+
+        Ok(())
     }
 
     fn complete<'a, T: Scope<'a>>(
@@ -80,6 +89,18 @@ declare_types! {
         }
 
         method play(call) {
+            let scope = call.scope;
+            let f = call.arguments.require(scope, 0)?.check::<JsFunction>()?;
+            let t = WaitTask {
+                controller: call.arguments.this(scope).grab(|nrodio| {
+                    nrodio.controller.clone()
+                })
+            };
+            t.schedule(f);
+            Ok(JsUndefined::new().upcast())
+        }
+
+        method resume(call) {
             match call.arguments.this(call.scope).grab(|nrodio| {
                 let cmd = NodeRodioCommand::Play;
                 match nrodio.controller.lock() {
@@ -143,41 +164,6 @@ declare_types! {
                 match nrodio.controller.lock() {
                     Ok(controller) => controller.send(cmd),
                     Err(_) => Err(SendError(cmd))
-                }
-            }) {
-                Ok(_) => Ok(JsUndefined::new().upcast()),
-                Err(_) => JsError::throw(Kind::Error, "The internal rodio thread is busy or has been already killed")
-            }
-        }
-
-        method wait(call) {
-            let scope = call.scope;
-            let f = call.arguments.require(scope, 0)?.check::<JsFunction>()?;
-            let t = WaitTask {
-                controller: call.arguments.this(scope).grab(|nrodio| {
-                    nrodio.controller.clone()
-                })
-            };
-            t.schedule(f);
-            Ok(JsUndefined::new().upcast())
-        }
-
-         method send(call) {
-            let scope = call.scope;
-            let command_str = call.arguments.require(scope, 0)?.to_string(scope)?.value();
-            let command = match command_str.as_str() {
-                "play" => NodeRodioCommand::Play,
-                "pause" => NodeRodioCommand::Pause,
-                "stop" => NodeRodioCommand::Stop,
-                "append" => NodeRodioCommand::Append(call.arguments.require(scope, 1)?.to_string(scope)?.value()),
-                "volume" => NodeRodioCommand::Volume(call.arguments.require(scope, 1)?.check::<JsNumber>()?.value() as f32),
-                _ => return JsError::throw(Kind::Error, "Invalid command given to controller")
-            };
-
-            match call.arguments.this(scope).grab(|nrodio| {
-                match nrodio.controller.lock() {
-                    Ok(controller) => controller.send(command),
-                    Err(_) => Err(SendError(command))
                 }
             }) {
                 Ok(_) => Ok(JsUndefined::new().upcast()),
