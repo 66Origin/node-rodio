@@ -7,9 +7,9 @@
   "author": "Mathieu Amiot <mathieu.amiot@yellowinnovation.fr>",
   "license": "Apache-2.0",
   "dependencies": {
-    "neon-cli": "^0.1.23"
+    "neon-cli": "^0.2.0"
   },
   "scripts": {
-    "install": "neon build"
+    "install": "./node_modules/.bin/neon build --release"
   }
 }

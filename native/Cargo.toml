@@ -9,7 +9,7 @@ version = "0.0.5"
 neon-build = "0.1.23"
 
 [dependencies]
-neon = "0.1.23"
+neon = "0.2.0"
 rodio = "0.8.0"
 cpal = "0.8.2"
 arcmutex = "0.2.0"
