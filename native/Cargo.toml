@@ -12,7 +12,7 @@ neon-build = "0.2.0"
 neon = "0.2.0"
 rodio = "0.8.0"
 cpal = "0.8.2"
-arcmutex = "0.2.0"
+crossbeam-channel = "0.2.4"
 
 [lib]
 crate-type = ["dylib"]

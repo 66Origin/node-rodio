@@ -1,7 +1,7 @@
+use crossbeam_channel::{unbounded, Receiver, Sender};
 use rodio;
 use std::fs::File;
 use std::io::BufReader;
-use std::sync::mpsc::{channel, Receiver, RecvError, SendError, Sender};
 use std::thread;
 
 /// Commands that are being sent to the controller
@@ -27,10 +27,10 @@ pub struct NodeRodioController {
 
 impl NodeRodioController {
     pub fn new(mut sink: rodio::Sink) -> Self {
-        let (tx, rx) = channel();
-        let (tx_out, rx_out) = channel();
+        let (tx, rx) = unbounded();
+        let (tx_out, rx_out) = unbounded();
 
-        let timeout = ::std::time::Duration::from_millis(1);
+        let dur = ::std::time::Duration::from_millis(5);
 
         thread::spawn(move || {
             let mut added_once = false;
@@ -43,7 +43,7 @@ impl NodeRodioController {
                     break;
                 }
 
-                if let Ok(command) = rx.recv_timeout(timeout) {
+                if let Some(command) = rx.try_recv() {
                     match command {
                         NodeRodioCommand::Append(path) => {
                             let file = File::open(&path).unwrap();
@@ -63,17 +63,19 @@ impl NodeRodioController {
                         NodeRodioCommand::Volume(vol) => sink.set_volume(vol),
                     }
                 }
+
+                thread::sleep(dur);
             }
         });
 
         NodeRodioController { tx, rx_out }
     }
 
-    pub fn send(&self, cmd: NodeRodioCommand) -> Result<(), SendError<NodeRodioCommand>> {
-        self.tx.send(cmd)
+    pub fn send(&self, cmd: NodeRodioCommand) {
+        self.tx.send(cmd);
     }
 
-    pub fn wait(&self) -> Result<(), RecvError> {
-        self.rx_out.recv()
+    pub fn wait(&self) {
+        let _ = self.rx_out.recv();
     }
 }

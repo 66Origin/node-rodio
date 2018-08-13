@@ -1,13 +1,12 @@
 #[macro_use]
 extern crate neon;
-extern crate arcmutex;
 extern crate cpal;
+extern crate crossbeam_channel;
 extern crate rodio;
 
-use arcmutex::*;
 use neon::prelude::*;
 
-use std::sync::mpsc::SendError;
+use std::sync::{Arc, RwLock};
 
 mod controller;
 mod funcs;
@@ -17,7 +16,7 @@ use self::controller::{NodeRodioCommand, NodeRodioController};
 
 #[derive(Debug)]
 pub struct NodeRodio {
-    controller: ArcMutex<NodeRodioController>,
+    controller: Arc<RwLock<NodeRodioController>>,
 }
 
 impl NodeRodio {
@@ -28,13 +27,13 @@ impl NodeRodio {
         let _ = controller.send(NodeRodioCommand::Pause);
 
         Some(NodeRodio {
-            controller: arcmutex(controller),
+            controller: Arc::new(RwLock::new(controller)),
         })
     }
 }
 
 struct WaitTask {
-    controller: ArcMutex<NodeRodioController>,
+    controller: Arc<RwLock<NodeRodioController>>,
 }
 
 impl Task for WaitTask {
@@ -43,19 +42,13 @@ impl Task for WaitTask {
     type JsEvent = JsUndefined;
 
     fn perform(&self) -> Result<Self::Output, Self::Error> {
-        match self.controller.try_lock() {
-            Ok(controller) => match controller.send(NodeRodioCommand::Play) {
-                Ok(_) => {}
-                Err(e) => return Err(format!("{}", e)),
-            },
+        match self.controller.read() {
+            Ok(controller) => controller.send(NodeRodioCommand::Play),
             Err(e) => return Err(format!("{}", e)),
         }
 
-        if let Ok(controller) = self.controller.lock() {
-            match controller.wait() {
-                Ok(_) => {}
-                Err(e) => return Err(format!("{}", e)),
-            }
+        if let Ok(controller) = self.controller.read() {
+            controller.wait();
         }
 
         Ok(())
@@ -71,6 +64,18 @@ impl Task for WaitTask {
             Err(e) => cx.throw_error(&e),
         }
     }
+}
+
+macro_rules! send {
+    ($cx:ident, $cmd:ident) => {{
+        let this = $cx.this();
+        let guard = $cx.lock();
+        let nrodio = this.borrow(&guard);
+        if let Ok(controller) = nrodio.controller.read() {
+            controller.send($cmd);
+        }
+        drop(this);
+    }};
 }
 
 declare_types! {
@@ -100,94 +105,34 @@ declare_types! {
 
         method resume(mut cx) {
             let cmd = NodeRodioCommand::Play;
-            match {
-                let this = cx.this();
-                let guard = cx.lock();
-                let nrodio = this.borrow(&guard);
-                let ret = match nrodio.controller.lock() {
-                    Ok(controller) => controller.send(cmd),
-                    Err(_) => Err(SendError(cmd))
-                };
-                drop(this);
-                ret
-            } {
-                Ok(_) => Ok(cx.undefined().upcast()),
-                Err(_) => cx.throw_error("The internal rodio thread is busy or has been already killed")
-            }
+            send!(cx, cmd);
+            Ok(cx.undefined().upcast())
         }
 
         method pause(mut cx) {
             let cmd = NodeRodioCommand::Pause;
-            match {
-                let this = cx.this();
-                let guard = cx.lock();
-                let nrodio = this.borrow(&guard);
-                let ret = match nrodio.controller.lock() {
-                    Ok(controller) => controller.send(cmd),
-                    Err(_) => Err(SendError(cmd))
-                };
-                drop(this);
-                ret
-            } {
-                Ok(_) => Ok(cx.undefined().upcast()),
-                Err(_) => cx.throw_error("The internal rodio thread is busy or has been already killed")
-            }
+            send!(cx, cmd);
+            Ok(cx.undefined().upcast())
         }
 
         method stop(mut cx) {
             let cmd = NodeRodioCommand::Stop;
-            match {
-                let this = cx.this();
-                let guard = cx.lock();
-                let nrodio = this.borrow(&guard);
-                let ret = match nrodio.controller.lock() {
-                    Ok(controller) => controller.send(cmd),
-                    Err(_) => Err(SendError(cmd))
-                };
-                drop(this);
-                ret
-            } {
-                Ok(_) => Ok(cx.undefined().upcast()),
-                Err(_) => cx.throw_error("The internal rodio thread is busy or has been already killed")
-            }
+            send!(cx, cmd);
+            Ok(cx.undefined().upcast())
         }
 
         method append(mut cx) {
             let path = cx.argument::<JsString>(0)?.value();
             let cmd = NodeRodioCommand::Append(path);
-            match {
-                let this = cx.this();
-                let guard = cx.lock();
-                let nrodio = this.borrow(&guard);
-                let ret = match nrodio.controller.lock() {
-                    Ok(controller) => controller.send(cmd),
-                    Err(_) => Err(SendError(cmd))
-                };
-                drop(this);
-                ret
-            } {
-                Ok(_) => Ok(cx.undefined().upcast()),
-                Err(_) => cx.throw_error("The internal rodio thread is busy or has been already killed")
-            }
+            send!(cx, cmd);
+            Ok(cx.undefined().upcast())
         }
 
         method volume(mut cx) {
             let vol: f64 = cx.argument::<JsNumber>(0)?.value();
             let cmd = NodeRodioCommand::Volume(vol as f32);
-            match {
-                let this = cx.this();
-                let guard = cx.lock();
-                let nrodio = this.borrow(&guard);
-                let ret = match nrodio.controller.lock() {
-                    Ok(controller) => controller.send(cmd),
-                    Err(_) => Err(SendError(cmd))
-                };
-                drop(this);
-                ret
-            } {
-                Ok(_) => Ok(cx.undefined().upcast()),
-                Err(_) => cx.throw_error("The internal rodio thread is busy or has been already killed")
-            }
+            send!(cx, cmd);
+            Ok(cx.undefined().upcast())
         }
     }
 }
