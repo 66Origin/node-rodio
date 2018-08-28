@@ -22,7 +22,7 @@ pub enum NodeRodioCommand {
 #[derive(Debug)]
 pub struct NodeRodioController {
     tx: Sender<NodeRodioCommand>,
-    rx_out: Receiver<()>,
+    rx_out: Receiver<Option<String>>,
 }
 
 impl NodeRodioController {
@@ -39,18 +39,28 @@ impl NodeRodioController {
                 if added_once && played_once && sink.empty() {
                     sink.stop();
                     sink.detach();
-                    let _ = tx_out.send(());
+                    let _ = tx_out.send(None);
                     break;
                 }
 
                 if let Some(command) = rx.try_recv() {
                     match command {
-                        NodeRodioCommand::Append(path) => {
-                            let file = File::open(&path).unwrap();
-                            let decoder = rodio::Decoder::new(BufReader::new(file)).unwrap();
-                            sink.append(decoder);
-                            added_once = true;
-                        }
+                        NodeRodioCommand::Append(path) => match File::open(&path) {
+                            Ok(file) => match rodio::Decoder::new(BufReader::new(file)) {
+                                Ok(decoder) => {
+                                    sink.append(decoder);
+                                    added_once = true;
+                                }
+                                Err(e) => {
+                                    tx_out.send(Some(format!("{}", e)));
+                                    break;
+                                }
+                            },
+                            Err(e) => {
+                                tx_out.send(Some(format!("{}", e)));
+                                break;
+                            }
+                        },
                         NodeRodioCommand::Play => {
                             sink.play();
                             played_once = true;
@@ -75,7 +85,7 @@ impl NodeRodioController {
         self.tx.send(cmd);
     }
 
-    pub fn wait(&self) {
-        let _ = self.rx_out.recv();
+    pub fn wait(&self) -> Option<String> {
+        self.rx_out.recv()?
     }
 }

@@ -6,6 +6,7 @@ extern crate rodio;
 
 use neon::prelude::*;
 
+use std::path::Path;
 use std::sync::{Arc, RwLock};
 
 mod controller;
@@ -47,11 +48,13 @@ impl Task for WaitTask {
             Err(e) => return Err(format!("{}", e)),
         }
 
-        if let Ok(controller) = self.controller.read() {
-            controller.wait();
+        match self.controller.read() {
+            Ok(controller) => match controller.wait() {
+                Some(e) => Err(e),
+                None => Ok(()),
+            },
+            Err(e) => Err(format!("{}", e)),
         }
-
-        Ok(())
     }
 
     fn complete(
@@ -123,6 +126,9 @@ declare_types! {
 
         method append(mut cx) {
             let path = cx.argument::<JsString>(0)?.value();
+            if !Path::new(&path).exists() {
+                return cx.throw_error(format!("{}: File not found", path));
+            }
             let cmd = NodeRodioCommand::Append(path);
             send!(cx, cmd);
             Ok(cx.undefined().upcast())
