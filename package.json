@@ -1,6 +1,6 @@
 {
   "name": "@yellowinnovation/node-rodio",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "repository": "github:YellowInnovation/node-rodio",
   "description": "Rodio (Rust audio playback library) bindings for Node.js with Neon",
   "main": "lib/index.js",

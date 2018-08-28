@@ -388,7 +388,7 @@ dependencies = [
 
 [[package]]
 name = "node-rodio"
-version = "0.0.7"
+version = "0.0.8"
 dependencies = [
  "cpal 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "crossbeam-channel 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
