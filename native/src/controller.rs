@@ -1,8 +1,6 @@
-use crossbeam_channel::{unbounded, Receiver, Sender};
 use rodio;
 use std::fs::File;
 use std::io::BufReader;
-use std::thread;
 
 /// Commands that are being sent to the controller
 #[derive(Debug, Clone)]
@@ -15,77 +13,41 @@ pub enum NodeRodioCommand {
     Pause,
     /// Stops playback. WARNING: you cannot resume playback after that
     Stop,
-    /// Changes volume
-    Volume(f32),
 }
 
-#[derive(Debug)]
 pub struct NodeRodioController {
-    tx: Sender<NodeRodioCommand>,
-    rx_out: Receiver<Option<String>>,
+    pub sink: rodio::Sink,
 }
 
 impl NodeRodioController {
-    pub fn new(mut sink: rodio::Sink) -> Self {
-        let (tx, rx) = unbounded();
-        let (tx_out, rx_out) = unbounded();
+    pub fn new(sink: rodio::Sink) -> Self {
+        NodeRodioController { sink }
+    }
 
-        let dur = ::std::time::Duration::from_millis(5);
+    pub fn set_volume(&mut self, volume: f32) {
+        self.sink.set_volume(volume);
+    }
 
-        thread::spawn(move || {
-            let mut added_once = false;
-            let mut played_once = false;
-            loop {
-                if added_once && played_once && sink.empty() {
-                    sink.stop();
-                    sink.detach();
-                    let _ = tx_out.send(None);
-                    break;
-                }
-
-                if let Some(command) = rx.try_recv() {
-                    match command {
-                        NodeRodioCommand::Append(path) => match File::open(&path) {
-                            Ok(file) => match rodio::Decoder::new(BufReader::new(file)) {
-                                Ok(decoder) => {
-                                    sink.append(decoder);
-                                    added_once = true;
-                                }
-                                Err(e) => {
-                                    tx_out.send(Some(format!("{}", e)));
-                                    break;
-                                }
-                            },
-                            Err(e) => {
-                                tx_out.send(Some(format!("{}", e)));
-                                break;
-                            }
-                        },
-                        NodeRodioCommand::Play => {
-                            sink.play();
-                            played_once = true;
-                        }
-                        NodeRodioCommand::Pause => sink.pause(),
-                        NodeRodioCommand::Stop => {
-                            sink.stop();
-                            break;
-                        }
-                        NodeRodioCommand::Volume(vol) => sink.set_volume(vol),
+    pub fn send(&self, cmd: NodeRodioCommand) -> Result<(), String> {
+        match cmd {
+            NodeRodioCommand::Append(path) => match File::open(&path) {
+                Ok(file) => match rodio::Decoder::new(BufReader::new(file)) {
+                    Ok(decoder) => {
+                        self.sink.append(decoder);
                     }
-                }
-
-                thread::sleep(dur);
+                    Err(e) => return Err(format!("{}", e)),
+                },
+                Err(e) => return Err(format!("{}", e)),
+            },
+            NodeRodioCommand::Play => {
+                self.sink.play();
             }
-        });
+            NodeRodioCommand::Pause => self.sink.pause(),
+            NodeRodioCommand::Stop => {
+                self.sink.stop();
+            }
+        }
 
-        NodeRodioController { tx, rx_out }
-    }
-
-    pub fn send(&self, cmd: NodeRodioCommand) {
-        self.tx.send(cmd);
-    }
-
-    pub fn wait(&self) -> Option<String> {
-        self.rx_out.recv()?
+        Ok(())
     }
 }

@@ -23,14 +23,14 @@ try {
 
     player.append("./samples/music.mp3"); // Loads a file in the queue
     player.append("./samples/beep.wav"); // Another one that will play after the music.mp3
+    player.volume(0.5); // Sets volume to 50%; CANNOT BE USED DURING PLAYBACK OR IT WILL THROW, it'll behave fine here though
     // If you'd like to get sounds in parallel, just create another player and make them .play(); at the same time!
     player.play(() => { // Starts playback, expects a callback that is executed when the queue is over
         console.log('done!');
     });
-    player.volume(0.5); // Sets volume to 50%;
     player.pause(); // Pauses playback
     player.resume(); // Resumes playback
-    player.volume(1.0); // Sets the volume to 100%
+    player.volume(1.0); // Sets the volume to 100%; CANNOT BE USED DURING PLAYBACK OR IT WILL THROW, it will throw here for example
     player.stop(); // Stops playback completely and empties queue.
     // player is not usable at this point since we killed the background thread.
 } catch (e) {
@@ -42,8 +42,8 @@ try {
 
 Licensed under:
 
-* Apache License, Version 2.0, ([LICENSE](LICENSE) or
-   [https://www.apache.org/licenses/LICENSE-2.0](https://www.apache.org/licenses/LICENSE-2.0))
+* Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)), or
+* MIT license ([LICENSE-MIT](LICENSE-MIT) or [http://opensource.org/licenses/MIT](http://opensource.org/licenses/MIT))
 
 ## Credits
 

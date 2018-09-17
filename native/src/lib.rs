@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate neon;
 extern crate cpal;
-extern crate crossbeam_channel;
 extern crate rodio;
 
 use neon::prelude::*;
@@ -15,7 +14,6 @@ mod support;
 
 use self::controller::{NodeRodioCommand, NodeRodioController};
 
-#[derive(Debug)]
 pub struct NodeRodio {
     controller: Arc<RwLock<NodeRodioController>>,
 }
@@ -44,17 +42,14 @@ impl Task for WaitTask {
 
     fn perform(&self) -> Result<Self::Output, Self::Error> {
         match self.controller.read() {
-            Ok(controller) => controller.send(NodeRodioCommand::Play),
+            Ok(controller) => {
+                controller.send(NodeRodioCommand::Play)?;
+                controller.sink.sleep_until_end();
+            }
             Err(e) => return Err(format!("{}", e)),
         }
 
-        match self.controller.read() {
-            Ok(controller) => match controller.wait() {
-                Some(e) => Err(e),
-                None => Ok(()),
-            },
-            Err(e) => Err(format!("{}", e)),
-        }
+        Ok(())
     }
 
     fn complete(
@@ -74,10 +69,13 @@ macro_rules! send {
         let this = $cx.this();
         let guard = $cx.lock();
         let nrodio = this.borrow(&guard);
-        if let Ok(controller) = nrodio.controller.read() {
-            controller.send($cmd);
-        }
+        let res = if let Ok(controller) = nrodio.controller.read() {
+            controller.send($cmd)
+        } else {
+            Err(String::from("controller is locked"))
+        };
         drop(this);
+        res
     }};
 }
 
@@ -108,20 +106,26 @@ declare_types! {
 
         method resume(mut cx) {
             let cmd = NodeRodioCommand::Play;
-            send!(cx, cmd);
-            Ok(cx.undefined().upcast())
+            match send!(cx, cmd) {
+                Ok(_) => Ok(cx.undefined().upcast()),
+                Err(e) => cx.throw_error(e)
+            }
         }
 
         method pause(mut cx) {
             let cmd = NodeRodioCommand::Pause;
-            send!(cx, cmd);
-            Ok(cx.undefined().upcast())
+            match send!(cx, cmd) {
+                Ok(_) => Ok(cx.undefined().upcast()),
+                Err(e) => cx.throw_error(e)
+            }
         }
 
         method stop(mut cx) {
             let cmd = NodeRodioCommand::Stop;
-            send!(cx, cmd);
-            Ok(cx.undefined().upcast())
+            match send!(cx, cmd) {
+                Ok(_) => Ok(cx.undefined().upcast()),
+                Err(e) => cx.throw_error(e)
+            }
         }
 
         method append(mut cx) {
@@ -130,15 +134,34 @@ declare_types! {
                 return cx.throw_error(format!("{}: File not found", path));
             }
             let cmd = NodeRodioCommand::Append(path);
-            send!(cx, cmd);
-            Ok(cx.undefined().upcast())
+            match send!(cx, cmd) {
+                Ok(_) => Ok(cx.undefined().upcast()),
+                Err(e) => cx.throw_error(e)
+            }
         }
 
         method volume(mut cx) {
             let vol: f64 = cx.argument::<JsNumber>(0)?.value();
-            let cmd = NodeRodioCommand::Volume(vol as f32);
-            send!(cx, cmd);
-            Ok(cx.undefined().upcast())
+            let res = {
+                let this = cx.this();
+                let guard = cx.lock();
+                let nrodio = this.borrow(&guard);
+                let res_inner = if let Ok(mut controller) = nrodio.controller.try_write() {
+                    controller.set_volume(vol as f32);
+                    Ok(())
+                } else {
+                    Err(String::from("controller is locked"))
+                };
+                drop(this);
+
+                res_inner
+            };
+
+
+            match res {
+                Ok(_) => Ok(cx.undefined().upcast()),
+                Err(e) => cx.throw_error(e)
+            }
         }
     }
 }

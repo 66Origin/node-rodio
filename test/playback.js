@@ -14,6 +14,11 @@ try {
 try {
     p.append('./samples/music.wav');
     p2.append('./samples/beep.wav');
+    console.log('trying to change volume before playback, should behave correctly');
+    try { p2.volume(0.3); }
+    catch (e) {
+        console.error(e);
+    }
 
     Promise.all([
         new Promise((res, rej) => {
@@ -23,7 +28,9 @@ try {
                 }
 
                 console.log('done music');
+                console.log('trying to resume beeping');
                 p2.resume();
+                console.log('resumed beeping')
                 res();
             });
         }),
@@ -53,7 +60,13 @@ try {
     }, 1000);
 
     setTimeout(() => {
+        console.log('trying to pause beeping');
         p2.pause();
+        console.log('paused beeping');
+
+        console.log('trying to change volume during playback, should be locked');
+        try { p.volume(0.3); }
+        catch (e) { console.log('p is locked as expected'); }
     }, 3000);
 } catch (e) {
     console.error(e);

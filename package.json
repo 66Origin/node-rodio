@@ -1,15 +1,15 @@
 {
-  "name": "@yellowinnovation/node-rodio",
-  "version": "0.0.8",
-  "repository": "github:YellowInnovation/node-rodio",
-  "description": "Rodio (Rust audio playback library) bindings for Node.js with Neon",
-  "main": "lib/index.js",
-  "author": "Mathieu Amiot <mathieu.amiot@yellowinnovation.fr>",
-  "license": "Apache-2.0",
-  "dependencies": {
-    "neon-cli": "^0.2.0"
-  },
-  "scripts": {
-    "install": "./node_modules/.bin/neon build --release"
-  }
+    "name": "@yellowinnovation/node-rodio",
+    "version": "0.0.8",
+    "repository": "github:YellowInnovation/node-rodio",
+    "description": "Rodio (Rust audio playback library) bindings for Node.js with Neon",
+    "main": "lib/index.js",
+    "author": "Mathieu Amiot <mathieu.amiot@yellowinnovation.fr>",
+    "license": "(MIT OR Apache-2.0)",
+    "dependencies": {
+        "neon-cli": "^0.2.0"
+    },
+    "scripts": {
+        "install": "./node_modules/.bin/neon build --release"
+    }
 }
