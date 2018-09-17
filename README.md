@@ -1,16 +1,30 @@
 # node-rodio
 
+[![npm (scoped)](https://img.shields.io/npm/v/@yellowinnovation/node-rodio.svg)](https://www.npmjs.com/package/@yellowinnovation/node-rodio)
+[![David](https://img.shields.io/david/YellowInnovation/node-rodio.svg)](https://www.npmjs.com/package/@yellowinnovation/node-rodio)
+
+
 [Rodio](https://github.com/tomaka/rodio) (Rust audio playback library) bindings for Node.js, built with [Neon](https://www.neon-bindings.com/)
 
 ## Installation
 
 `npm install @yellowinnovation/node-rodio`
 
+or
+
+```json
+{
+    "dependencies": {
+        "@yellowinnovation/node-rodio": "0.0.9"
+    }
+}
+```
+
 ## Usage
 
 ```javascript
 
-const rodio = require('node-rodio');
+const rodio = require('@yellowinnovation/node-rodio');
 
 try {
     console.log(rodio.defaultInputDevice()); // { name: "Your default microphone" ... sample rate, format etc }
@@ -47,7 +61,7 @@ Licensed under:
 
 ## Credits
 
-* Huge props to @tomaka for his amazing work on [rodio](https://github.com/tomaka/rodio) / [cpal](https://github.com/tomaka/cpal)
+* Huge props to [@tomaka](https://github.com/tomaka) for his amazing work on [rodio](https://github.com/tomaka/rodio) & [cpal](https://github.com/tomaka/cpal)
 
 ## Yellow Innovation
 

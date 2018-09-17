@@ -328,7 +328,7 @@ dependencies = [
 
 [[package]]
 name = "node-rodio"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "cpal 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "neon 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
