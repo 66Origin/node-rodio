@@ -74,6 +74,8 @@ macro_rules! send {
         } else {
             Err(String::from("controller is locked"))
         };
+
+        drop(nrodio);
         drop(this);
         res
     }};

@@ -51,3 +51,9 @@ impl NodeRodioController {
         Ok(())
     }
 }
+
+impl Drop for NodeRodioController {
+    fn drop(&mut self) {
+        self.sink.stop();
+    }
+}
